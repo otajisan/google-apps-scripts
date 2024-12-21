@@ -34,7 +34,13 @@ const getCache = () => {
 };
 
 const saveCache = (value) => {
-  cache.put(CACHE_KEY, JSON.stringify(value), CACHE_TTL);
+  try {
+    cache.put(CACHE_KEY, JSON.stringify(value), CACHE_TTL);
+  } catch (ex) {
+    Logger.log('===== Cache Faild =====')
+    Logger.log(ex);
+    Logger.log(`maybe cache size is too large. value: ${value}`);
+  }
 };
 
 const toNotion = (pageId, entry, rss) => {
