@@ -1,4 +1,7 @@
 const properties = PropertiesService.getScriptProperties();
+const cache = CacheService.getScriptCache();
+const CACHE_KEY = 'ALREADY_FETCHED';
+const CACHE_TTL = 21600;
 const SPREAD_SHEET_ID = properties.getProperty('SPREAD_SHEET_ID');
 
 
@@ -7,23 +10,46 @@ const  main = () => {
   const rssList = readRssList_(sheet);
   Logger.log(`${rssList.length} urls found.`);
 
+  const cached = getCache();
+
   rssList.map((rss) => {
     rssResults = fetchRss(rss['url']);
     Logger.log(`${rssResults.length} entries found.`);
     
     rssResults.map((entry) => {
-      toNotion(entry, rss);
+      const pageId = md5sum(entry['title']);
+      toNotion(pageId, entry, rss);
     });
   });
   
 };
 
-const toNotion = (entry, rss) => {
-  const pageId = md5sum(entry['title']);
+const getCache = () => {
+  const cached = cache.get(CACHE_KEY);
+  if (cached !== null && typeof cached !== 'undefined') {
+    return JSON.parse(cached);
+  }
+
+  return [];
+};
+
+const saveCache = (value) => {
+  cache.put(CACHE_KEY, JSON.stringify(value), CACHE_TTL);
+};
+
+const toNotion = (pageId, entry, rss) => {
+  const cached = getCache();
+  if (cached.indexOf(pageId) !== -1) {
+    Logger.log(`cache found. page already exists. pageId: ${pageId}`);
+    return;
+  }
+
   const currentPage = searchPageByID_(pageId)
 
   if (currentPage != undefined) {
-    Logger.log(`page already exists. pageId: ${pageId}`);
+    Logger.log(`page found. page already exists. pageId: ${pageId}`);
+    cached.push(pageId);
+    saveCache(cached);
     return;
   }
   const newPage = createNewNotionPage_(entry, rss['category'], pageId);

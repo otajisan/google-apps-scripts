@@ -27,6 +27,8 @@ const requestNotionApi = (path, opts) => {
   } catch (ex) {
     Logger.log('===== Request Faild =====')
     Logger.log(ex);
-    throw new Error(`something wrong. please check! Notion API url: ${url} opts: ${opts}`);
+    Logger.log(`something wrong. please check! Notion API url: ${url} opts: ${opts}`);
+    //throw new Error(`something wrong. please check! Notion API url: ${url} opts: ${opts}`);
+
   }
 };
